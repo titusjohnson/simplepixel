@@ -1,0 +1,25 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.index #gridTarget {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: white;
+}
+
+#gridTarget .row {
+
+  display: flex;
+}
+
+#gridTarget .row .block {
+  flex: 0 0 20px;
+  height: 20px;
+  background-color: #EFEFEF;
+  border: 1px solid white;
+}
