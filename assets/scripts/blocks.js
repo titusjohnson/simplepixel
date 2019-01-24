@@ -19,11 +19,14 @@ function gridUpNode(rootNode) {
       for(c=0;c<=columnMax;c++) {
         setTimeout(function() {
           var newBlock = blockSource.cloneNode()
+          if (Math.random() < 0.05) {
+            newBlock.classList.add("irritate")
+          }
           newRow.appendChild(newBlock)
 
-        }, c * Math.random() * 120)
+        }, c * r * Math.random())
       }
-    }, r * Math.random() * 160)
+    }, r * Math.random() * 50)
   }
 };
 
