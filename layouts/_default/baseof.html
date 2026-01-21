@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if .Title }}{{ .Title }} | {{ end }}{{ .Site.Title }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  {{ block "head" . }}{{ end }}
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body class="{{ block "body_class" . }}{{ end }}">
+  {{ block "main" . }}{{ end }}
+</body>
+</html>

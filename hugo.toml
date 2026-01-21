@@ -1,0 +1,14 @@
+baseURL = "https://simplepixel.org/"
+languageCode = "en-us"
+title = "simplepixel"
+
+[permalinks]
+  blog = "/blog/:slug/"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[params]
+  description = "Experiments and projects by Titus Johnson"
