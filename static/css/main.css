@@ -1,0 +1,37 @@
+/* Base styles - customize as needed */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+nav {
+  margin-bottom: 2rem;
+}
+
+nav a {
+  margin-right: 1rem;
+}
+
+.post-preview {
+  margin-bottom: 2rem;
+}
+
+.post-preview h2 {
+  margin-bottom: 0.25rem;
+}
+
+.post-preview time {
+  color: #666;
+  font-size: 0.9rem;
+}
