@@ -1,21 +1,299 @@
-{{ define "body_class" }}home{{ end }}
-{{ define "main" }}
-{{/*
-  Replace this block with your HTML landing page content.
+{{ define "body_class" }}home{{ end }} {{ define "main" }}
 
-  This is processed by Hugo so you can use:
-  - Partials: {{ partial "header.html" . }}
-  - Variables: {{ .Site.Title }}
-  - Content from content/_index.md: {{ .Content }}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-  Links to your experiments:
-  - https://arbitrage.simplepixel.org
-  - https://easymenu.simplepixel.org
-  - /blog/
-*/}}
-<main>
-  <h1>simplepixel</h1>
-  <p>Landing page placeholder - paste your HTML blob here.</p>
-  {{ .Content }}
-</main>
+    body {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #2c3e2e 0%, #1a2418 100%);
+        font-family:
+            system-ui,
+            -apple-system,
+            sans-serif;
+        overflow: hidden;
+    }
+
+    .scene {
+        perspective: 1000px;
+        perspective-origin: 50% 50%;
+    }
+
+    .cube-container {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: rotateX(-30deg) rotateY(45deg);
+        cursor: grab;
+    }
+
+    .cube-container.dragging {
+        cursor: grabbing;
+    }
+
+    .sub-cube {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        left: 50%;
+        top: 50%;
+        margin-left: -30px;
+        margin-top: -30px;
+        transform-style: preserve-3d;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        cursor: pointer;
+    }
+
+    .sub-cube:hover {
+        z-index: 100;
+    }
+
+    .face {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        backface-visibility: visible;
+        transition: background-color 0.3s ease;
+    }
+
+    /* Army/olive color palette */
+    .face.top {
+        background: #a8b08c;
+        transform: rotateX(90deg) translateZ(30px);
+    }
+
+    .face.bottom {
+        background: #4a5238;
+        transform: rotateX(-90deg) translateZ(30px);
+    }
+
+    .face.front {
+        background: #7d8a5e;
+        transform: translateZ(30px);
+    }
+
+    .face.back {
+        background: #5c6844;
+        transform: rotateY(180deg) translateZ(30px);
+    }
+
+    .face.right {
+        background: #6b7750;
+        transform: rotateY(90deg) translateZ(30px);
+    }
+
+    .face.left {
+        background: #5c6844;
+        transform: rotateY(-90deg) translateZ(30px);
+    }
+
+    /* Hover state - brighter colors */
+    .sub-cube:hover .face.top {
+        background: #c4cca8;
+    }
+
+    .sub-cube:hover .face.bottom {
+        background: #5c6844;
+    }
+
+    .sub-cube:hover .face.front {
+        background: #95a472;
+    }
+
+    .sub-cube:hover .face.back {
+        background: #748058;
+    }
+
+    .sub-cube:hover .face.right {
+        background: #8a9868;
+    }
+
+    .sub-cube:hover .face.left {
+        background: #748058;
+    }
+
+    /* Active state - all black */
+    .sub-cube:active .face {
+        background: #000 !important;
+        transition: background-color 0.05s ease;
+    }
+
+    /* Instructions overlay */
+    .instructions {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(168, 176, 140, 0.7);
+        font-size: 14px;
+        text-align: center;
+        pointer-events: none;
+    }
+</style>
+
+<div class="scene">
+    <div class="cube-container" id="cubeContainer"></div>
+</div>
+
+<script>
+    (function () {
+        const container = document.getElementById("cubeContainer");
+        const cubeSize = 60;
+        const gap = 8;
+        const totalSize = cubeSize + gap;
+
+        // Center offset to position cubes around origin
+        const offset = totalSize;
+
+        // Generate 27 sub-cubes (3x3x3 grid)
+        let cubeIndex = 1;
+        for (let level = 0; level < 3; level++) {
+            // y-axis (levels)
+            for (let row = 0; row < 3; row++) {
+                // z-axis (depth)
+                for (let col = 0; col < 3; col++) {
+                    // x-axis (columns)
+                    const subCube = document.createElement("div");
+                    subCube.className = "sub-cube";
+                    subCube.dataset.url = `#cube-${cubeIndex}`;
+                    subCube.dataset.col = col;
+                    subCube.dataset.row = row;
+                    subCube.dataset.level = level;
+
+                    // Position in 3D space (centered around origin)
+                    const x = (col - 1) * totalSize;
+                    const y = (level - 1) * totalSize;
+                    const z = (row - 1) * totalSize;
+
+                    subCube.style.transform = `translate3d(${x}px, ${-y}px, ${z}px)`;
+                    subCube.dataset.baseTransform = `translate3d(${x}px, ${-y}px, ${z}px)`;
+
+                    // Create 6 faces
+                    const faces = [
+                        "front",
+                        "back",
+                        "right",
+                        "left",
+                        "top",
+                        "bottom",
+                    ];
+                    faces.forEach((faceName) => {
+                        const face = document.createElement("div");
+                        face.className = `face ${faceName}`;
+                        subCube.appendChild(face);
+                    });
+
+                    container.appendChild(subCube);
+                    cubeIndex++;
+                }
+            }
+        }
+
+        // Drag-to-spin rotation
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let rotation = { x: -30, y: 45 };
+        let dragDistance = 0;
+
+        function updateRotation() {
+            container.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
+        }
+
+        function onPointerDown(e) {
+            isDragging = true;
+            dragDistance = 0;
+            container.classList.add("dragging");
+            previousMousePosition = {
+                x: e.clientX || e.touches?.[0]?.clientX || 0,
+                y: e.clientY || e.touches?.[0]?.clientY || 0,
+            };
+            e.preventDefault();
+        }
+
+        function onPointerMove(e) {
+            if (!isDragging) return;
+
+            const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+            const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+
+            const deltaX = clientX - previousMousePosition.x;
+            const deltaY = clientY - previousMousePosition.y;
+
+            dragDistance += Math.abs(deltaX) + Math.abs(deltaY);
+
+            rotation.y += deltaX * 0.5;
+            rotation.x -= deltaY * 0.5;
+
+            // Clamp X rotation to prevent flipping
+            rotation.x = Math.max(-90, Math.min(90, rotation.x));
+
+            updateRotation();
+
+            previousMousePosition = { x: clientX, y: clientY };
+        }
+
+        function onPointerUp(e) {
+            isDragging = false;
+            container.classList.remove("dragging");
+        }
+
+        // Mouse events
+        container.addEventListener("mousedown", onPointerDown);
+        document.addEventListener("mousemove", onPointerMove);
+        document.addEventListener("mouseup", onPointerUp);
+
+        // Touch events
+        container.addEventListener("touchstart", onPointerDown, {
+            passive: false,
+        });
+        document.addEventListener("touchmove", onPointerMove, {
+            passive: false,
+        });
+        document.addEventListener("touchend", onPointerUp);
+
+        // Hover expansion effect
+        const subCubes = document.querySelectorAll(".sub-cube");
+
+        subCubes.forEach((cube) => {
+            cube.addEventListener("mouseenter", function () {
+                const col = parseInt(this.dataset.col);
+                const row = parseInt(this.dataset.row);
+                const level = parseInt(this.dataset.level);
+
+                // Calculate expansion direction (away from center)
+                const expandX = (col - 1) * 12;
+                const expandY = (level - 1) * 12;
+                const expandZ = (row - 1) * 12;
+
+                const baseTransform = this.dataset.baseTransform;
+                this.style.transform = `${baseTransform} translate3d(${expandX}px, ${-expandY}px, ${expandZ}px) scale3d(1.15, 1.15, 1.15)`;
+            });
+
+            cube.addEventListener("mouseleave", function () {
+                this.style.transform = this.dataset.baseTransform;
+            });
+
+            // Click navigation
+            cube.addEventListener("click", function (e) {
+                // Only navigate if it wasn't a drag
+                if (dragDistance < 5) {
+                    const url = this.dataset.url;
+                    console.log(`Navigating to: ${url}`);
+                    window.location.href = url;
+                }
+            });
+        });
+
+        // Prevent context menu on long press (mobile)
+        container.addEventListener("contextmenu", (e) => e.preventDefault());
+    })();
+</script>
 {{ end }}
