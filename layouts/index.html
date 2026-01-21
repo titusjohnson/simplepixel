@@ -51,7 +51,7 @@
         cursor: pointer;
     }
 
-    .sub-cube:hover {
+    .sub-cube:not(.disabled):hover {
         z-index: 100;
     }
 
@@ -95,35 +95,40 @@
         transform: rotateY(-90deg) translateZ(30px);
     }
 
-    /* Hover state - brighter colors */
-    .sub-cube:hover .face.top {
+    /* Hover state - brighter colors (only for linked cubes) */
+    .sub-cube:not(.disabled):hover .face.top {
         background: #c4cca8;
     }
 
-    .sub-cube:hover .face.bottom {
+    .sub-cube:not(.disabled):hover .face.bottom {
         background: #5c6844;
     }
 
-    .sub-cube:hover .face.front {
+    .sub-cube:not(.disabled):hover .face.front {
         background: #95a472;
     }
 
-    .sub-cube:hover .face.back {
+    .sub-cube:not(.disabled):hover .face.back {
         background: #748058;
     }
 
-    .sub-cube:hover .face.right {
+    .sub-cube:not(.disabled):hover .face.right {
         background: #8a9868;
     }
 
-    .sub-cube:hover .face.left {
+    .sub-cube:not(.disabled):hover .face.left {
         background: #748058;
     }
 
-    /* Active state - all black */
-    .sub-cube:active .face {
+    /* Active state - all black (only for linked cubes) */
+    .sub-cube:not(.disabled):active .face {
         background: #000 !important;
         transition: background-color 0.05s ease;
+    }
+
+    /* Disabled cubes - no hover/active effects */
+    .sub-cube.disabled {
+        cursor: default;
     }
 
     /* Instructions overlay */
@@ -145,57 +150,133 @@
 
 <script>
     (function () {
+        // =====================================================
+        // LINK CONFIGURATION
+        //
+        // Positions are numbered 0-26 based on visual appearance
+        // in the isometric view (rotateX -30°, rotateY 45°).
+        //
+        // Numbering starts at the front corner (pointing at you)
+        // and spirals clockwise around each layer:
+        //
+        //   TOP LAYER (0-8)        MIDDLE LAYER (9-17)    BOTTOM LAYER (18-26)
+        //
+        //        4                      13                      22
+        //       /  \                   /  \                    /  \
+        //      5    3                14    12                23    21
+        //     /  8   \              /  17   \               /  26   \
+        //    6       2            15        11            24        20
+        //     \  7  /              \  16   /               \  25   /
+        //      ↖  ↗                 ↖   ↗                   ↖   ↗
+        //        ★0                   ★9                     ★18
+        //        1                    10                      19
+        //        ↓                     ↓                       ↓
+        //      (you)                (you)                   (you)
+        //
+        // ★ = front corner (most visible)
+        // Set a URL to null to disable that cube.
+        // =====================================================
+        const CUBE_LINKS = {
+            0: "/blog/",                            // front corner (top)
+            1: "https://arbitrage.simplepixel.org", // right edge (top)
+            2: "https://easymenu.simplepixel.org",  // right corner (top)
+            3: null,   // right-back edge (top)
+            4: null,   // back corner (top)
+            5: null,   // left-back edge (top)
+            6: null,   // left corner (top)
+            7: null,   // left edge (top)
+            8: null,   // center (top)
+            9: null,   // front corner (middle)
+            10: null,  // right edge (middle)
+            11: null,  // right corner (middle)
+            12: null,  // right-back edge (middle)
+            13: null,  // back corner (middle)
+            14: null,  // left-back edge (middle)
+            15: null,  // left corner (middle)
+            16: null,  // left edge (middle)
+            17: null,  // center (middle)
+            18: null,  // front corner (bottom)
+            19: null,  // right edge (bottom)
+            20: null,  // right corner (bottom)
+            21: null,  // right-back edge (bottom)
+            22: null,  // back corner (bottom)
+            23: null,  // left-back edge (bottom)
+            24: null,  // left corner (bottom)
+            25: null,  // left edge (bottom)
+            26: null,  // center (bottom)
+        };
+        // =====================================================
+
+        // Maps visual position (0-26) to [col, row, level]
+        // After rotateY(45deg), the corner at (col=0, row=2) points toward viewer
+        // After rotateX(-30deg), the top layer (level=2) tilts toward viewer
+        // Ordered: front corner, clockwise around edge, center; repeated per layer
+        const POSITION_MAP = [
+            // Top layer (0-8) - most visible
+            [0, 2, 2], // 0: front corner
+            [1, 2, 2], // 1: right edge
+            [2, 2, 2], // 2: right corner
+            [2, 1, 2], // 3: right-back edge
+            [2, 0, 2], // 4: back corner
+            [1, 0, 2], // 5: left-back edge
+            [0, 0, 2], // 6: left corner
+            [0, 1, 2], // 7: left edge
+            [1, 1, 2], // 8: center
+            // Middle layer (9-17)
+            [0, 2, 1], // 9: front corner
+            [1, 2, 1], // 10: right edge
+            [2, 2, 1], // 11: right corner
+            [2, 1, 1], // 12: right-back edge
+            [2, 0, 1], // 13: back corner
+            [1, 0, 1], // 14: left-back edge
+            [0, 0, 1], // 15: left corner
+            [0, 1, 1], // 16: left edge
+            [1, 1, 1], // 17: center
+            // Bottom layer (18-26)
+            [0, 2, 0], // 18: front corner
+            [1, 2, 0], // 19: right edge
+            [2, 2, 0], // 20: right corner
+            [2, 1, 0], // 21: right-back edge
+            [2, 0, 0], // 22: back corner
+            [1, 0, 0], // 23: left-back edge
+            [0, 0, 0], // 24: left corner
+            [0, 1, 0], // 25: left edge
+            [1, 1, 0], // 26: center
+        ];
+
         const container = document.getElementById("cubeContainer");
         const cubeSize = 60;
         const gap = 8;
         const totalSize = cubeSize + gap;
 
-        // Center offset to position cubes around origin
-        const offset = totalSize;
+        // Generate 27 sub-cubes from visual position map
+        POSITION_MAP.forEach((pos, visualIndex) => {
+            const [col, row, level] = pos;
+            const subCube = document.createElement("div");
+            subCube.className = "sub-cube";
+            subCube.dataset.url = CUBE_LINKS[visualIndex] || "";
+            subCube.dataset.col = col;
+            subCube.dataset.row = row;
+            subCube.dataset.level = level;
 
-        // Generate 27 sub-cubes (3x3x3 grid)
-        let cubeIndex = 1;
-        for (let level = 0; level < 3; level++) {
-            // y-axis (levels)
-            for (let row = 0; row < 3; row++) {
-                // z-axis (depth)
-                for (let col = 0; col < 3; col++) {
-                    // x-axis (columns)
-                    const subCube = document.createElement("div");
-                    subCube.className = "sub-cube";
-                    subCube.dataset.url = `#cube-${cubeIndex}`;
-                    subCube.dataset.col = col;
-                    subCube.dataset.row = row;
-                    subCube.dataset.level = level;
+            // Position in 3D space (centered around origin)
+            const x = (col - 1) * totalSize;
+            const y = (level - 1) * totalSize;
+            const z = (row - 1) * totalSize;
 
-                    // Position in 3D space (centered around origin)
-                    const x = (col - 1) * totalSize;
-                    const y = (level - 1) * totalSize;
-                    const z = (row - 1) * totalSize;
+            subCube.style.transform = `translate3d(${x}px, ${-y}px, ${z}px)`;
+            subCube.dataset.baseTransform = `translate3d(${x}px, ${-y}px, ${z}px)`;
 
-                    subCube.style.transform = `translate3d(${x}px, ${-y}px, ${z}px)`;
-                    subCube.dataset.baseTransform = `translate3d(${x}px, ${-y}px, ${z}px)`;
+            // Create 6 faces
+            const faces = ["front", "back", "right", "left", "top", "bottom"];
+            faces.forEach((faceName) => {
+                const face = document.createElement("div");
+                face.className = `face ${faceName}`;
+                subCube.appendChild(face);
+            });
 
-                    // Create 6 faces
-                    const faces = [
-                        "front",
-                        "back",
-                        "right",
-                        "left",
-                        "top",
-                        "bottom",
-                    ];
-                    faces.forEach((faceName) => {
-                        const face = document.createElement("div");
-                        face.className = `face ${faceName}`;
-                        subCube.appendChild(face);
-                    });
-
-                    container.appendChild(subCube);
-                    cubeIndex++;
-                }
-            }
-        }
+            container.appendChild(subCube);
+        });
 
         // Drag-to-spin rotation
         let isDragging = false;
@@ -263,7 +344,17 @@
         const subCubes = document.querySelectorAll(".sub-cube");
 
         subCubes.forEach((cube) => {
+            const hasLink = !!cube.dataset.url;
+
+            // Mark cubes without links as disabled
+            if (!hasLink) {
+                cube.classList.add("disabled");
+            }
+
             cube.addEventListener("mouseenter", function () {
+                // Skip hover effect for cubes without links
+                if (!this.dataset.url) return;
+
                 const col = parseInt(this.dataset.col);
                 const row = parseInt(this.dataset.row);
                 const level = parseInt(this.dataset.level);
@@ -283,10 +374,9 @@
 
             // Click navigation
             cube.addEventListener("click", function (e) {
-                // Only navigate if it wasn't a drag
-                if (dragDistance < 5) {
-                    const url = this.dataset.url;
-                    console.log(`Navigating to: ${url}`);
+                // Only navigate if it wasn't a drag and URL is configured
+                const url = this.dataset.url;
+                if (dragDistance < 5 && url) {
                     window.location.href = url;
                 }
             });
