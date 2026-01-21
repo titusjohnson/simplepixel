@@ -1,0 +1,14 @@
+# Links displayed on the landing page
+# Add, remove, or reorder entries here
+
+[[link]]
+title = "Arbitrage"
+url = "https://arbitrage.simplepixel.org"
+
+[[link]]
+title = "Easy Menu"
+url = "https://easymenu.simplepixel.org"
+
+[[link]]
+title = "Blog"
+url = "/blog/"

@@ -1,21 +1,12 @@
 {{ define "body_class" }}home{{ end }}
 {{ define "main" }}
-{{/*
-  Replace this block with your HTML landing page content.
-
-  This is processed by Hugo so you can use:
-  - Partials: {{ partial "header.html" . }}
-  - Variables: {{ .Site.Title }}
-  - Content from content/_index.md: {{ .Content }}
-
-  Links to your experiments:
-  - https://arbitrage.simplepixel.org
-  - https://easymenu.simplepixel.org
-  - /blog/
-*/}}
 <main>
   <h1>simplepixel</h1>
-  <p>Landing page placeholder - paste your HTML blob here.</p>
+  <nav class="links">
+    {{ range .Site.Data.links.link }}
+    <a href="{{ .url }}">{{ .title }}</a>
+    {{ end }}
+  </nav>
   {{ .Content }}
 </main>
 {{ end }}
