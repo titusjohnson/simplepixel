@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["hugo", "caddy"]
+
+[phases.build]
+cmds = ["hugo --minify"]
+
+[start]
+cmd = "caddy file-server --root public --listen :${PORT:-3000}"
