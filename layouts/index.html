@@ -51,7 +51,7 @@
         cursor: pointer;
     }
 
-    .sub-cube:hover {
+    .sub-cube:not(.disabled):hover {
         z-index: 100;
     }
 
@@ -95,35 +95,40 @@
         transform: rotateY(-90deg) translateZ(30px);
     }
 
-    /* Hover state - brighter colors */
-    .sub-cube:hover .face.top {
+    /* Hover state - brighter colors (only for linked cubes) */
+    .sub-cube:not(.disabled):hover .face.top {
         background: #c4cca8;
     }
 
-    .sub-cube:hover .face.bottom {
+    .sub-cube:not(.disabled):hover .face.bottom {
         background: #5c6844;
     }
 
-    .sub-cube:hover .face.front {
+    .sub-cube:not(.disabled):hover .face.front {
         background: #95a472;
     }
 
-    .sub-cube:hover .face.back {
+    .sub-cube:not(.disabled):hover .face.back {
         background: #748058;
     }
 
-    .sub-cube:hover .face.right {
+    .sub-cube:not(.disabled):hover .face.right {
         background: #8a9868;
     }
 
-    .sub-cube:hover .face.left {
+    .sub-cube:not(.disabled):hover .face.left {
         background: #748058;
     }
 
-    /* Active state - all black */
-    .sub-cube:active .face {
+    /* Active state - all black (only for linked cubes) */
+    .sub-cube:not(.disabled):active .face {
         background: #000 !important;
         transition: background-color 0.05s ease;
+    }
+
+    /* Disabled cubes - no hover/active effects */
+    .sub-cube.disabled {
+        cursor: default;
     }
 
     /* Instructions overlay */
@@ -145,6 +150,48 @@
 
 <script>
     (function () {
+        // =====================================================
+        // LINK CONFIGURATION
+        // Each cube position maps to a destination URL.
+        // Positions are numbered 1-27, arranged as:
+        //   Level 0 (bottom): cubes 1-9
+        //   Level 1 (middle): cubes 10-18
+        //   Level 2 (top):    cubes 19-27
+        // Within each level, numbering goes left-to-right,
+        // front-to-back (row 0 = front, row 2 = back).
+        // Set a URL to null or omit it to disable that cube.
+        // =====================================================
+        const CUBE_LINKS = {
+            1: null,
+            2: null,
+            3: null,
+            4: null,
+            5: null,
+            6: null,
+            7: null,
+            8: null,
+            9: null,
+            10: null,
+            11: null,
+            12: null,
+            13: null,
+            14: null,
+            15: null,
+            16: null,
+            17: null,
+            18: null,
+            19: null,
+            20: null,
+            21: null,
+            22: null,
+            23: null,
+            24: null,
+            25: null,
+            26: null,
+            27: null,
+        };
+        // =====================================================
+
         const container = document.getElementById("cubeContainer");
         const cubeSize = 60;
         const gap = 8;
@@ -163,7 +210,7 @@
                     // x-axis (columns)
                     const subCube = document.createElement("div");
                     subCube.className = "sub-cube";
-                    subCube.dataset.url = `#cube-${cubeIndex}`;
+                    subCube.dataset.url = CUBE_LINKS[cubeIndex] || "";
                     subCube.dataset.col = col;
                     subCube.dataset.row = row;
                     subCube.dataset.level = level;
@@ -263,7 +310,17 @@
         const subCubes = document.querySelectorAll(".sub-cube");
 
         subCubes.forEach((cube) => {
+            const hasLink = !!cube.dataset.url;
+
+            // Mark cubes without links as disabled
+            if (!hasLink) {
+                cube.classList.add("disabled");
+            }
+
             cube.addEventListener("mouseenter", function () {
+                // Skip hover effect for cubes without links
+                if (!this.dataset.url) return;
+
                 const col = parseInt(this.dataset.col);
                 const row = parseInt(this.dataset.row);
                 const level = parseInt(this.dataset.level);
@@ -283,10 +340,9 @@
 
             // Click navigation
             cube.addEventListener("click", function (e) {
-                // Only navigate if it wasn't a drag
-                if (dragDistance < 5) {
-                    const url = this.dataset.url;
-                    console.log(`Navigating to: ${url}`);
+                // Only navigate if it wasn't a drag and URL is configured
+                const url = this.dataset.url;
+                if (dragDistance < 5 && url) {
                     window.location.href = url;
                 }
             });
